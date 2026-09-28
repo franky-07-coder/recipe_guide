@@ -1,62 +1,83 @@
-import { createContext, useState } from "react";
+import { createContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { searchRecipes } from "../api/recipes";
 
 export const GlobalContext = createContext(null);
 
 export default function GlobalState({ children }) {
   const [searchParam, setSearchParam] = useState("");
   const [loading, setLoading] = useState(false);
+  const [searchError, setSearchError] = useState("");
+  const [lastSearch, setLastSearch] = useState("");
   const [recipeList, setRecipeList] = useState([]);
   const [recipeDetailsData, setRecipeDetailsData] = useState(null);
-  const [favoritesList, setFavoritesList] = useState([])
+  const [favoritesList, setFavoritesList] = useState(() => {
+    try {
+      const savedFavorites = localStorage.getItem("recipe-guide-favorites");
+      return savedFavorites ? JSON.parse(savedFavorites) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem("recipe-guide-favorites", JSON.stringify(favoritesList));
+  }, [favoritesList]);
 
   const navigate = useNavigate()
 
   async function handleSubmit(event) {
     event.preventDefault();
+    await searchForRecipes(searchParam);
+  }
+
+  async function handleQuickSearch(query) {
+    setSearchParam(query);
+    await searchForRecipes(query);
+  }
+
+  async function searchForRecipes(searchTerm) {
+    const query = searchTerm.trim();
+    if (!query || loading) return;
+
+    setLoading(true);
+    setSearchError("");
+    setLastSearch(query);
     try {
-      const res = await fetch(
-        `https://forkify-api.herokuapp.com/api/v2/recipes?search=${searchParam}`
+      const recipes = await searchRecipes(query);
+      setRecipeList(recipes);
+      setSearchParam("");
+      navigate("/");
+    } catch {
+      setSearchError("Recipe search is unavailable right now. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleAddToFavorite(getCurrentItem) {
+    setFavoritesList((currentFavorites) => {
+      const alreadyFavorited = currentFavorites.some(
+        (item) => item.id === getCurrentItem.id
       );
 
-      const data = await res.json();
-      if (data?.data?.recipes) {
-        setRecipeList(data?.data?.recipes);
-        setLoading(false);
-        setSearchParam("");
-        navigate('/')
-      }
-    } catch (e) {
-      console.log(e);
-      setLoading(false);
-      setSearchParam("");
-    }
+      return alreadyFavorited
+        ? currentFavorites.filter((item) => item.id !== getCurrentItem.id)
+        : [...currentFavorites, getCurrentItem];
+    });
   }
-
-  function handleAddToFavorite(getCurrentItem){
-    console.log(getCurrentItem);
-    let cpyFavoritesList = [...favoritesList];
-    const index = cpyFavoritesList.findIndex(item=> item.id === getCurrentItem.id)
-
-    if(index === -1) {
-      cpyFavoritesList.push(getCurrentItem)
-    } else {
-      cpyFavoritesList.splice(index)
-    }
-
-    setFavoritesList(cpyFavoritesList)
-  }
-
-  console.log(favoritesList, 'favoritesList');
 
   return (
     <GlobalContext.Provider
       value={{
         searchParam,
         loading,
+        searchError,
+        lastSearch,
         recipeList,
         setSearchParam,
         handleSubmit,
+        handleQuickSearch,
         recipeDetailsData,
         setRecipeDetailsData,
         handleAddToFavorite,

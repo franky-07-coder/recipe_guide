@@ -146,9 +146,9 @@ This allows different components and pages to access and update shared applicati
 
 ## 🌐 API
 
-Recipe data is provided by the **Forkify API**.
+Recipe data is provided by the **Forkify API** and **TheMealDB**. Search combines dish-name results from both sources with ingredient matches from TheMealDB, removing duplicate meals where possible.
 
-The application uses the API to:
+The application uses these APIs to:
 
 - Search recipes
 - Retrieve individual recipe details
@@ -165,6 +165,8 @@ and
 ```text
 https://forkify-api.herokuapp.com/api/v2/recipes/{recipeId}
 ```
+
+TheMealDB endpoints include `search.php?s={query}`, `filter.php?i={ingredient}`, and `lookup.php?i={mealId}` using its free test key for development.
 
 ## 📱 Responsive Design
 

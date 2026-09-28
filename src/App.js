@@ -9,7 +9,8 @@ import Details from "./pages/details";
 function App() {
   return (
     <div>
-      <div className="min-h-screen p-6 bg-white text-gray-600 text-lg">
+      <div className="min-h-screen px-5 pb-16 text-stone-800 sm:px-8">
+        <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-orange-100/70 via-[#fffaf4] to-emerald-50/60" />
         <Navbar />
         <Routes>
           <Route path="/" element={<Home />} />
